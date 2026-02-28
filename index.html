@@ -877,6 +877,11 @@ let currentUser=null,currentSurahNo=1,surahCache={},allAmaliahData=[],allUsersDa
 
 // ==================== INIT ====================
 document.addEventListener('DOMContentLoaded',function(){
+    // Jika URL sudah tertanam, hapus sesi offline lama agar login ulang via server
+    if(GAS_URL_EMBEDDED){
+        const wasOffline=localStorage.getItem('amaliahOfflineMode');
+        if(wasOffline){localStorage.removeItem('amaliahUser');localStorage.removeItem('amaliahOfflineMode')}
+    }
     const saved=localStorage.getItem('amaliahUser');
     if(saved){currentUser=JSON.parse(saved);showMainApp()}
     updateGasCodeDisplay();updateIdStatus();
@@ -899,19 +904,20 @@ function doLogin(){
     const gasUrl=getGasUrl();
     if(gasUrl){
         fetch(`${gasUrl}?${new URLSearchParams({action:'login',username,password,role})}`).then(r=>r.json()).then(data=>{
-            if(data.status==='success'){currentUser=data.user;localStorage.setItem('amaliahUser',JSON.stringify(currentUser));showMainApp()}
+            if(data.status==='success'){currentUser=data.user;localStorage.setItem('amaliahUser',JSON.stringify(currentUser));localStorage.removeItem('amaliahOfflineMode');showMainApp()}
             else{errDiv.textContent='❌ '+data.message;errDiv.classList.remove('hidden')}
         }).catch(err=>{errDiv.textContent='❌ Gagal terhubung ke server. Periksa koneksi internet & URL GAS.';errDiv.classList.remove('hidden')}).finally(()=>{btn.disabled=false;btn.innerHTML='🔐 Masuk'});
     }else{
-        // Fallback: login offline menggunakan akun default (sebelum terhubung ke Spreadsheet)
+        // Tidak ada URL GAS sama sekali — mode offline darurat
         const acc=DEFAULT_ACCOUNTS.find(a=>a.username===username&&a.password===password&&a.role===role);
         if(acc){
             currentUser={username:acc.username,nama:acc.nama,role:acc.role,kelas:acc.kelas};
             localStorage.setItem('amaliahUser',JSON.stringify(currentUser));
+            localStorage.setItem('amaliahOfflineMode','true');
             showMainApp();
-            showToast('⚠️ Mode Offline — Hubungkan ke Google Spreadsheet untuk data real');
+            showToast('⚠️ Mode Offline — URL GAS belum ditanam di kode!');
         }else{
-            errDiv.textContent='❌ Username/password salah atau role tidak sesuai! Pastikan Google Spreadsheet sudah terhubung.';
+            errDiv.textContent='❌ URL GAS belum dikonfigurasi! Tanam URL di index.html atau pastikan username/password benar.';
             errDiv.classList.remove('hidden');
         }
         btn.disabled=false;btn.innerHTML='🔐 Masuk';
