@@ -553,6 +553,16 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">🔗 URL Web App</label>
                 <input type="text" id="gasUrl" class="w-full border-2 border-blue-400 rounded-xl px-4 py-3 font-mono text-sm focus:ring-4 focus:ring-blue-200" placeholder="https://script.google.com/macros/s/xxxxx/exec">
             </div>
+            <div id="embeddedUrlStatus" class="mb-4"></div>
+            <div class="bg-amber-50 border-l-4 border-amber-500 p-4 mb-4 rounded">
+                <p class="text-sm text-amber-800"><strong>💡 Cara Menanam URL Permanen:</strong></p>
+                <p class="text-sm text-amber-700 mt-1">Buka file <code class="bg-amber-200 px-1.5 py-0.5 rounded">index.html</code> → cari baris:</p>
+                <div class="bg-gray-800 text-green-400 rounded-lg p-3 mt-2 font-mono text-xs">
+                    <p class="text-gray-400">// ✅ PASTE URL WEB APP GOOGLE APPS SCRIPT ANDA DI BAWAH INI:</p>
+                    <p>const GAS_URL_EMBEDDED = '<span class="text-yellow-300">PASTE_URL_DISINI</span>';</p>
+                </div>
+                <p class="text-xs text-amber-600 mt-2">Setelah ditanam, aplikasi langsung terhubung tanpa perlu setup lagi! ✅</p>
+            </div>
             <div class="flex flex-wrap gap-3">
                 <button onclick="saveSetup()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium">💾 Simpan</button>
                 <button onclick="testConnection()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium">🔌 Test Koneksi</button>
@@ -854,6 +864,13 @@ function nilaiHafalan(p){
   return{status:'success',message:'Penilaian hafalan berhasil disimpan!'};
 }`;
 }
+
+// ==================== KONFIGURASI URL GAS ====================
+// ✅ PASTE URL WEB APP GOOGLE APPS SCRIPT ANDA DI BAWAH INI:
+const GAS_URL_EMBEDDED = 'https://script.google.com/macros/s/AKfycbxYaCqlgsE2wGn8U6ZBWrtO7nxfXnvUAkGWNOrVTMbpMmtSvzDNxijFxP3f-rmqUjQ-EQ/exec';
+// Contoh: const GAS_URL_EMBEDDED = 'https://script.google.com/macros/s/AKfycbxxxxxxxxxxxxxx/exec';
+// Setelah diisi, semua fitur otomatis terhubung ke Google Spreadsheet.
+// ==============================================================
 
 // ==================== STATE ====================
 let currentUser=null,currentSurahNo=1,surahCache={},allAmaliahData=[],allUsersData=[],allHafalanData=[],hmSelectedStatus='';
@@ -1181,7 +1198,7 @@ function deleteUserConfirm(username){
 }
 
 // ==================== SETUP ====================
-function getGasUrl(){return localStorage.getItem('gasUrl')||''}
+function getGasUrl(){return GAS_URL_EMBEDDED||localStorage.getItem('gasUrl')||''}
 function onSpreadsheetIdChange(){localStorage.setItem('spreadsheetId',document.getElementById('spreadsheetId').value.trim());updateGasCodeDisplay();updateIdStatus()}
 function updateIdStatus(){
     const ssId=(document.getElementById('spreadsheetId')?document.getElementById('spreadsheetId').value.trim():'')||localStorage.getItem('spreadsheetId')||'';
@@ -1201,7 +1218,8 @@ function saveSetup(){
     if(ssId)localStorage.setItem('spreadsheetId',ssId);if(url)localStorage.setItem('gasUrl',url);
     if(ssId||url){updateGasCodeDisplay();updateIdStatus();showToast('✅ Pengaturan disimpan!')}else showToast('⚠️ Masukkan ID atau URL!');
 }
-function loadSetupFields(){const ssId=localStorage.getItem('spreadsheetId');const url=localStorage.getItem('gasUrl');if(ssId&&document.getElementById('spreadsheetId'))document.getElementById('spreadsheetId').value=ssId;if(url&&document.getElementById('gasUrl'))document.getElementById('gasUrl').value=url;updateGasCodeDisplay();updateIdStatus()}
+function loadSetupFields(){const ssId=localStorage.getItem('spreadsheetId');const url=localStorage.getItem('gasUrl');if(ssId&&document.getElementById('spreadsheetId'))document.getElementById('spreadsheetId').value=ssId;if(url&&document.getElementById('gasUrl'))document.getElementById('gasUrl').value=url;updateGasCodeDisplay();updateIdStatus();updateEmbeddedUrlStatus()}
+function updateEmbeddedUrlStatus(){const el=document.getElementById('embeddedUrlStatus');if(!el)return;if(GAS_URL_EMBEDDED){el.innerHTML=`<div class="bg-green-100 border-2 border-green-400 rounded-xl p-4 flex items-start gap-3"><div class="text-2xl">✅</div><div><p class="font-bold text-green-800">URL Web App Sudah Tertanam di Kode!</p><p class="text-sm text-green-700 mt-1">URL: <code class="bg-green-200 px-2 py-0.5 rounded font-mono text-xs break-all">${GAS_URL_EMBEDDED}</code></p><p class="text-sm text-green-600 mt-1">Aplikasi otomatis terhubung ke Google Spreadsheet tanpa perlu setup manual.</p></div></div>`}else{el.innerHTML=`<div class="bg-yellow-100 border-2 border-yellow-400 rounded-xl p-4 flex items-start gap-3"><div class="text-2xl">⚠️</div><div><p class="font-bold text-yellow-800">URL Belum Ditanam di Kode</p><p class="text-sm text-yellow-700 mt-1">Anda bisa paste URL di kolom atas lalu klik Simpan (sementara), atau tanam langsung di file index.html (permanen).</p></div></div>`}}
 function testConnection(){
     const url=getGasUrl(),st=document.getElementById('connectionStatus');
     if(!url){st.innerHTML='<span class="text-red-600">❌ URL belum diatur!</span>';return}
